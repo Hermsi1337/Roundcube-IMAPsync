@@ -1,0 +1,89 @@
+.imapsync-content {
+    height: 100%;
+}
+
+.imapsync-intro {
+    margin: 0 0 1rem;
+}
+
+.imapsync-form-table td.title {
+    width: 14rem;
+}
+
+.imapsync-form-table input,
+.imapsync-form-table select {
+    max-width: 28rem;
+}
+
+.imapsync-panel {
+    margin: 1rem;
+}
+
+.imapsync-progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.imapsync-progress-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border-color, #ddd);
+}
+
+.imapsync-progress-row:last-child {
+    border-bottom: 0;
+}
+
+.imapsync-progress-folder {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.imapsync-progress-counter {
+    color: var(--main-color, #37beff);
+    font-variant-numeric: tabular-nums;
+}
+
+.imapsync-summary-table {
+    width: 100%;
+    max-width: 32rem;
+}
+
+.imapsync-summary-table th {
+    width: 55%;
+    text-align: left;
+    font-weight: 600;
+}
+
+.imapsync-summary-table th,
+.imapsync-summary-table td {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border-color, #ddd);
+}
+
+.imapsync-errors {
+    margin-top: 1rem;
+    padding-left: 1.25rem;
+}
+
+.imapsync-errors li {
+    margin: 0.25rem 0;
+}
+
+@media screen and (max-width: 600px) {
+    .imapsync-form-table td.title,
+    .imapsync-form-table td {
+        display: block;
+        width: auto;
+    }
+
+    .imapsync-form-table input,
+    .imapsync-form-table select {
+        max-width: 100%;
+    }
+}

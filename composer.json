@@ -1,0 +1,63 @@
+{
+    "name": "hermsi1337/imapsync",
+    "description": "Roundcube plugin that pulls mail from a remote IMAP account into the currently logged-in mailbox. PHP-native sync via rcube_imap_generic.",
+    "type": "roundcube-plugin",
+    "license": "MIT",
+    "keywords": [
+        "roundcube",
+        "roundcube-plugin",
+        "imap",
+        "imapsync",
+        "mail",
+        "migration"
+    ],
+    "homepage": "https://github.com/Hermsi1337/Roundcube-IMAPsync",
+    "support": {
+        "issues": "https://github.com/Hermsi1337/Roundcube-IMAPsync/issues",
+        "source": "https://github.com/Hermsi1337/Roundcube-IMAPsync"
+    },
+    "authors": [
+        {
+            "name": "Dennis Hermsmeier",
+            "email": "dennis@hermsmeier.me",
+            "homepage": "https://github.com/Hermsi1337",
+            "role": "Maintainer"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "roundcube/plugin-installer": "~0.3.5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "testcontainers/testcontainers": "^1.0"
+    },
+    "scripts": {
+        "test": "@test:unit",
+        "test:unit": "phpunit",
+        "test:integration": "phpunit --configuration phpunit.integration.xml.dist",
+        "dist:fetch": "sh -c 'if [ -d dist/roundcubemail-1.7.0 ]; then echo \"dist/roundcubemail-1.7.0 already present, skipping.\"; exit 0; fi; curl -fLsS -o dist/roundcubemail-1.7.0-complete.tar.gz https://github.com/roundcube/roundcubemail/releases/download/1.7.0/roundcubemail-1.7.0-complete.tar.gz && tar -xzf dist/roundcubemail-1.7.0-complete.tar.gz -C dist && rm dist/roundcubemail-1.7.0-complete.tar.gz && echo \"dist/roundcubemail-1.7.0 ready.\"'"
+    },
+    "scripts-descriptions": {
+        "test": "Alias for test:unit.",
+        "test:unit": "Run the in-memory unit-test suite (fast, no Docker).",
+        "test:integration": "Run the Dovecot integration suite (requires a running Docker daemon).",
+        "dist:fetch": "Download and extract Roundcube 1.7.0 source into dist/ for local reference. Idempotent."
+    },
+    "autoload": {
+        "classmap": [
+            "imapsync.php",
+            "lib/"
+        ]
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.6.0"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "roundcube/plugin-installer": false
+        }
+    }
+}
