@@ -43,7 +43,27 @@ There is no Perl `imapsync` binary, no background daemon, no extra runtime depen
 
 ## Installation
 
-### Via Composer (recommended once published)
+### Drop-in release tarball (recommended)
+
+Every tagged release publishes a ready-to-unpack tarball and zip on the
+[GitHub Releases page](https://github.com/Hermsi1337/Roundcube-IMAPsync/releases).
+The archive root is `imapsync/`, so it extracts straight into Roundcube's
+`plugins/` directory — no composer, no git, no extra steps.
+
+```bash
+cd /path/to/roundcubemail/plugins
+# Replace v0.1.0 with the latest tag from the Releases page.
+curl -L -o imapsync.tar.gz \
+  https://github.com/Hermsi1337/Roundcube-IMAPsync/releases/download/v0.1.0/roundcube-imapsync-0.1.0.tar.gz
+tar -xzf imapsync.tar.gz
+rm imapsync.tar.gz
+```
+
+A SHA-256 checksum file is published alongside each archive — verify it with
+`sha256sum -c roundcube-imapsync-<version>.sha256` if you care about supply-chain
+integrity.
+
+### Via Composer
 
 ```bash
 cd /path/to/roundcubemail
@@ -52,14 +72,17 @@ composer require hermsi1337/imapsync
 
 Roundcube's `plugin-installer` will drop the plugin into `plugins/imapsync/`.
 
-### Manual / from this repository
+### From a git checkout (development)
 
 ```bash
 cd /path/to/roundcubemail/plugins
-git clone https://github.com/hermsi1337/Roundcube-IMAPsync imapsync
+git clone https://github.com/Hermsi1337/Roundcube-IMAPsync imapsync
 ```
 
-Then enable the plugin in `config/config.inc.php`:
+### Enabling the plugin
+
+Whichever install path you chose, enable the plugin in
+`config/config.inc.php`:
 
 ```php
 $config['plugins'] = [

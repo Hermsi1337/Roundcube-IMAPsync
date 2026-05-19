@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          version="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in
+              *-*) echo "prerelease=true"  >> "$GITHUB_OUTPUT" ;;
+              *)   echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+          extensions: imap, intl, mbstring
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Run unit tests (release safety gate)
+        run: vendor/bin/phpunit --colors=never
+
+      - name: Build release artifacts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          # The .gitattributes export-ignore directives strip dist/, tests/,
+          # .github/, phpunit*.xml.dist, .gitignore, .gitattributes from the
+          # archive automatically. The --prefix=imapsync/ wrapper lets users
+          # extract straight into Roundcube's plugins/ directory.
+          git archive --format=tar.gz --prefix=imapsync/ \
+            -o "dist-release/roundcube-imapsync-${VERSION}.tar.gz" HEAD
+          git archive --format=zip   --prefix=imapsync/ \
+            -o "dist-release/roundcube-imapsync-${VERSION}.zip"   HEAD
+
+      - name: Inspect archive contents
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          echo "=== tarball top-level layout ==="
+          tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | sort | head -40
+          echo
+          echo "=== archive sanity ==="
+          # Must contain plugin entry; must NOT contain dev-only paths.
+          tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | grep -q '^imapsync/imapsync.php$'
+          ! tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | grep -E '^imapsync/(tests|dist|\.github|\.gitignore|\.gitattributes|phpunit)' \
+            || { echo "Archive leaks dev-only paths"; exit 1; }
+          echo "OK"
+
+      - name: Generate SHA-256 checksums
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd dist-release
+          sha256sum "roundcube-imapsync-${VERSION}.tar.gz" "roundcube-imapsync-${VERSION}.zip" \
+            > "roundcube-imapsync-${VERSION}.sha256"
+          cat "roundcube-imapsync-${VERSION}.sha256"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## Install
+
+            **Drop-in tarball:**
+
+            ```bash
+            cd /path/to/roundcubemail/plugins
+            curl -L -o imapsync.tar.gz \
+              https://github.com/Hermsi1337/Roundcube-IMAPsync/releases/download/${{ steps.version.outputs.tag }}/roundcube-imapsync-${{ steps.version.outputs.version }}.tar.gz
+            tar -xzf imapsync.tar.gz && rm imapsync.tar.gz
+            ```
+
+            Then enable in `config/config.inc.php`:
+
+            ```php
+            $config['plugins'][] = 'imapsync';
+            ```
+
+            **Via Composer (once published on Packagist):**
+
+            ```bash
+            composer require hermsi1337/imapsync:${{ steps.version.outputs.version }}
+            ```
+
+            SHA-256 checksums are attached as `roundcube-imapsync-${{ steps.version.outputs.version }}.sha256`.
+
+            ---
+          files: |
+            dist-release/roundcube-imapsync-${{ steps.version.outputs.version }}.tar.gz
+            dist-release/roundcube-imapsync-${{ steps.version.outputs.version }}.zip
+            dist-release/roundcube-imapsync-${{ steps.version.outputs.version }}.sha256

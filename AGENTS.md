@@ -88,7 +88,8 @@ future worker mode — must use an out-of-session store (file, DB, Roundcube cac
 ├── .gitattributes                            # export-ignore tests/, dist/, .github/, etc.
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                            # unit + integration tests, lint, docs-freshness
+│       ├── ci.yml                            # unit + integration tests, lint, docs-freshness
+│       └── release.yml                       # tag → tarball + zip + checksums on GitHub Releases
 └── dist/                                     # gitignored — local Roundcube source for reference (see below)
 ```
 
@@ -332,6 +333,47 @@ GitHub Actions (`.github/workflows/ci.yml`) runs the deterministic subset of the
 job, alongside `unit-tests`, `integration-tests`, and PHP linting. A failing freshness check
 blocks the PR. CI is a safety net, not a substitute — run the checks locally before pushing so
 you don't burn a round trip on something a 30-second grep would have caught.
+
+---
+
+## Releases
+
+Releases are tag-driven. Pushing an annotated `v*.*.*` tag to GitHub fires
+`.github/workflows/release.yml`, which:
+
+1. Runs the unit-test suite as a safety gate.
+2. Builds a tarball and a zip via `git archive --prefix=imapsync/`, so the artifacts extract
+   directly into Roundcube's `plugins/` directory. The `.gitattributes` `export-ignore`
+   directives strip development-only paths (`tests/`, `dist/`, `.github/`, `phpunit*.xml.dist`,
+   `.gitignore`, `.gitattributes`) automatically.
+3. Generates SHA-256 checksums for the artifacts.
+4. Creates a GitHub Release with auto-generated release notes and attaches the archives plus
+   the checksum file.
+
+Tags containing a hyphen (e.g. `v0.2.0-rc1`) are marked as pre-releases automatically.
+
+### How to cut a release
+
+```bash
+# from main, on a green commit
+git tag -a v0.1.0 -m "v0.1.0 — first MVP release"
+git push origin v0.1.0
+```
+
+The workflow does the rest. Verify the release on the Releases page once the job finishes.
+
+If the release workflow fails (e.g. a unit test regressed between the last PR merge and the
+tag push), delete the tag with `git tag -d v0.1.0 && git push origin :refs/tags/v0.1.0`, fix
+the issue on `main`, and re-tag. Do not edit a published release's artifacts in place — the
+SHA-256 file becomes a lie the moment you do.
+
+### Things to bump for a release
+
+- `composer.json` does **not** carry a `version` field; the tag is the version. Do not add one.
+- `README.md` install snippets reference a placeholder version (currently `v0.1.0`). If the
+  first user-facing thing you want users to copy-paste needs to point at the latest tag, the
+  freshness check (see above) will not catch a stale version number — keep an eye on it
+  manually when you cut a release.
 
 ---
 
