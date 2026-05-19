@@ -4,3 +4,6 @@ dist/*
 /composer.lock
 /.phpunit.cache/
 /.phpunit.result.cache
+/.claude/
+/.codex/
+/.idea/
