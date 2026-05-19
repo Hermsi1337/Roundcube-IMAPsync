@@ -2,7 +2,6 @@
 
 use Testcontainers\Container\GenericContainer;
 use Testcontainers\Container\StartedGenericContainer;
-use Testcontainers\Wait\WaitForHostPort;
 
 class DovecotContainer
 {
@@ -13,7 +12,6 @@ class DovecotContainer
 
     private ?StartedGenericContainer $container = null;
     private ?string $configDirectory = null;
-    private ?string $mailDirectory = null;
 
     public function __construct(private readonly string $imageTag = 'dovecot/dovecot:latest-root')
     {
@@ -27,22 +25,25 @@ class DovecotContainer
         }
 
         $this->configDirectory = $this->createConfigDirectory();
-        $this->mailDirectory = $this->createWritableDirectory('mail');
         $container = new GenericContainer($this->imageTag);
 
         try {
+            // Mail storage stays inside the container's writable layer: we read
+            // it only over IMAP, and letting it live in the container avoids a
+            // bind-mount whose contents would be owned by root on teardown and
+            // unremovable by the unprivileged host test process.
+            // We also don't pass a withWait() strategy — testcontainers-php's
+            // WaitForHostPort emits foreach-over-null warnings during polling
+            // (library bug). Our own waitForTcpConnection() below is enough.
             $this->container = $container
                 ->withEnvironment(['USER_PASSWORD' => self::TEST_PASSWORD_HASH])
                 ->withMount($this->configDirectory, '/etc/dovecot/conf.d')
-                ->withMount($this->mailDirectory, '/srv/mail')
                 ->withExposedPorts(self::IMAP_PORT)
-                ->withWait(new WaitForHostPort(30000, 200))
                 ->start();
 
             $this->waitForTcpConnection();
         } catch (Throwable $containerStartError) {
             $this->removeConfigDirectory();
-            $this->removeMailDirectory();
 
             throw new RuntimeException(
                 'Dovecot container did not become ready: ' . $containerStartError->getMessage(),
@@ -63,7 +64,6 @@ class DovecotContainer
         } finally {
             $this->container = null;
             $this->removeConfigDirectory();
-            $this->removeMailDirectory();
         }
     }
 
@@ -118,8 +118,12 @@ class DovecotContainer
     {
         $configDirectory = $this->createWritableDirectory('config', 0700);
 
+        // Mail lives under /tmp/ inside the container so we don't need a host
+        // bind mount. /tmp exists in every Linux base image, the :latest-root
+        // image runs as root and can create subdirs there, and everything is
+        // discarded automatically when the container stops.
         $config = <<<'DOVECOT'
-mail_home = /srv/mail/%{user}
+mail_home = /tmp/dovecot/%{user}
 mail_path = ~/Maildir
 auth_allow_cleartext = yes
 import_environment {
@@ -181,41 +185,6 @@ DOVECOT;
 
         rmdir($this->configDirectory);
         $this->configDirectory = null;
-    }
-
-    private function removeMailDirectory(): void
-    {
-        if ($this->mailDirectory === null || !is_dir($this->mailDirectory)) {
-
-            return;
-        }
-
-        $this->removeDirectoryTree($this->mailDirectory);
-        $this->mailDirectory = null;
-    }
-
-    private function removeDirectoryTree(string $directory): void
-    {
-        $files = scandir($directory);
-        if ($files !== false) {
-            foreach ($files as $file) {
-                if ($file === '.' || $file === '..') {
-                    continue;
-                }
-
-                $path = $directory . DIRECTORY_SEPARATOR . $file;
-                if (is_dir($path)) {
-                    $this->removeDirectoryTree($path);
-                    continue;
-                }
-
-                if (is_file($path)) {
-                    unlink($path);
-                }
-            }
-        }
-
-        rmdir($directory);
     }
 
     private function requireStartedContainer(): StartedGenericContainer
