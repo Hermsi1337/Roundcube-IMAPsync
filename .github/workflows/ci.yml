@@ -42,7 +42,7 @@ jobs:
             | xargs -0 -n1 php -l > /dev/null
 
       - name: Run unit tests
-        run: vendor/bin/phpunit --colors=never
+        run: composer test:unit -- --colors=never
 
   integration-tests:
     name: Integration tests (Dovecot via Docker)

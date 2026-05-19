@@ -54,6 +54,7 @@ future worker mode — must use an out-of-session store (file, DB, Roundcube cac
 .
 ├── AGENTS.md                                 # this file
 ├── CLAUDE.md                                 # symlink → AGENTS.md
+├── LICENSE                                   # MIT
 ├── README.md                                 # user-facing documentation
 ├── composer.json                             # plugin manifest (Roundcube plugin-installer type)
 ├── imapsync.php                              # plugin entry class (extends rcube_plugin)
@@ -95,21 +96,19 @@ future worker mode — must use an out-of-session store (file, DB, Roundcube cac
 
 ### `dist/` directory
 
-**Gitignored.** Holds an unpacked Roundcube release used as read-only reference while developing
-the plugin (looking up plugin API signatures, copying patterns from existing plugins, etc.). Not
-shipped, not required at runtime.
+The `dist/` directory itself is tracked (via `dist/.gitkeep`) so the layout exists on clone;
+the **contents** are gitignored. The tree is a read-only reference (plugin API signatures,
+patterns from existing Roundcube plugins) — not shipped, not required at runtime.
 
 To re-create it:
 
 ```bash
-mkdir -p dist && cd dist
-curl -L -o roundcubemail-1.7.0-complete.tar.gz \
-  https://github.com/roundcube/roundcubemail/releases/download/1.7.0/roundcubemail-1.7.0-complete.tar.gz
-tar -xzf roundcubemail-1.7.0-complete.tar.gz
-rm roundcubemail-1.7.0-complete.tar.gz
+composer dist:fetch
 ```
 
-Roundcube download index: <https://roundcube.net/download/>.
+The script is idempotent: it does nothing if `dist/roundcubemail-1.7.0` is already present.
+Roundcube download index: <https://roundcube.net/download/> (bump the version pinned in the
+composer script when you want to follow a newer release).
 
 Useful files inside `dist/roundcubemail-1.7.0/`:
 
@@ -200,7 +199,8 @@ global rules win.
   fakes. Tests do **not** open real network sockets. There is a `FakeImapClient` test double
   in `tests/Fakes/FakeImapClient.php` modeling the small subset of `rcube_imap_generic` we
   call.
-- Run with `vendor/bin/phpunit` from the repo root. CI runs the same command.
+- Run with `composer test:unit` (unit only) or `composer test:integration` (Docker, real
+  Dovecot) from the repo root. CI runs both.
 
 ### Security expectations
 
@@ -395,13 +395,13 @@ Test suite:
 
 ```bash
 composer install
-vendor/bin/phpunit               # unit tests (fast, no network, no Docker)
+composer test:unit               # unit tests (fast, no network, no Docker)
 composer test:integration        # integration tests (requires a running Docker daemon)
 ```
 
-The integration suite spins up two real Dovecot containers via testcontainers-php and
-exercises the real `rcube_imap_generic` path; it skips itself cleanly when Docker is not
-available.
+`composer test` is an alias of `composer test:unit`. The integration suite spins up two real
+Dovecot containers via testcontainers-php and exercises the real `rcube_imap_generic` path; it
+skips itself cleanly when Docker is not available.
 
 ---
 

@@ -41,7 +41,7 @@ jobs:
         uses: ramsey/composer-install@v3
 
       - name: Run unit tests (release safety gate)
-        run: vendor/bin/phpunit --colors=never
+        run: composer test:unit -- --colors=never
 
       - name: Build release artifacts
         env:

@@ -170,42 +170,30 @@ cd Roundcube-IMAPsync
 composer install
 ```
 
-### Re-create the Roundcube reference tree
-
-The `dist/` tree is gitignored. If you need it locally (recommended — the test suite does not
-need it, but reading Roundcube's source is invaluable when extending the plugin):
-
-```bash
-mkdir -p dist && cd dist
-curl -L -o roundcubemail-1.7.0-complete.tar.gz \
-  https://github.com/roundcube/roundcubemail/releases/download/1.7.0/roundcubemail-1.7.0-complete.tar.gz
-tar -xzf roundcubemail-1.7.0-complete.tar.gz
-rm roundcubemail-1.7.0-complete.tar.gz
-```
-
-Newer Roundcube releases are listed at <https://roundcube.net/download/>.
-
 ### Running tests
 
 ```bash
-vendor/bin/phpunit
+composer test:unit          # in-memory unit tests, no network, no Docker
+composer test:integration   # Dovecot integration suite, requires a running Docker daemon
+composer test               # alias for test:unit
 ```
 
-The tests do not touch the network. The sync engine takes an injected IMAP-client interface
-(`RoundcubeImapSyncClient`); tests use an in-memory fake implementation
+The unit tests do not touch the network — the sync engine takes an injected IMAP-client
+interface (`RoundcubeImapSyncClient`) and the suite uses an in-memory fake
 (`tests/Fakes/FakeImapClient.php`).
 
-#### Integration tests (Docker)
+The integration suite spins up two real Dovecot containers via
+[`testcontainers-php`](https://github.com/testcontainers/testcontainers-php) and skips itself
+cleanly if Docker is not available.
 
-A second suite exercises the engine against two real Dovecot servers started via
-[`testcontainers-php`](https://github.com/testcontainers/testcontainers-php). It needs a running
-Docker daemon and is not part of the default `vendor/bin/phpunit` run.
+### Fetching the Roundcube reference tree
 
 ```bash
-composer test:integration
+composer dist:fetch
 ```
 
-The suite skips itself cleanly if Docker is not available.
+Downloads Roundcube 1.7.0 into `dist/` (idempotent — no-op if it's already there). The
+`dist/` tree is gitignored and only used as a read-only reference while developing the plugin.
 
 ### Conventions
 
@@ -243,7 +231,7 @@ context picks it up.
 
 ## License
 
-GPL-3.0-or-later. See `LICENSE` (or the SPDX header in each source file) for the full text.
+[MIT](LICENSE). See the `LICENSE` file at the repo root for the full text.
 
 ---
 

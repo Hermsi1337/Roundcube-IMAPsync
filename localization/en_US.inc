@@ -1,16 +1,9 @@
 <?php
 
 /*
- +-----------------------------------------------------------------------+
- | Localization file of the Roundcube Webmail IMAPsync plugin            |
- |                                                                       |
- | Copyright (C) The Roundcube Dev Team                                  |
- |                                                                       |
- | Licensed under the GNU General Public License version 3 or            |
- | any later version with exceptions for skins & plugins.                |
- | See the README file for a full license statement.                     |
- +-----------------------------------------------------------------------+
-*/
+ * Localization file of the Roundcube IMAPsync plugin (en_US — source of truth).
+ * Copyright (c) 2026 Dennis Hermsmeier. MIT licensed — see LICENSE at repo root.
+ */
 
 $labels = [];
 $labels['pagetitle'] = 'IMAP sync';
