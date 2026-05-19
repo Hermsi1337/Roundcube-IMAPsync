@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+          extensions: imap, intl, mbstring
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Lint PHP sources
+        run: |
+          find . -path ./vendor -prune -o -path ./dist -prune -o \
+                 -name '*.php' -print0 \
+            | xargs -0 -n1 php -l > /dev/null
+
+      - name: Run unit tests
+        run: vendor/bin/phpunit --colors=never
+
+  integration-tests:
+    name: Integration tests (Dovecot via Docker)
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+          extensions: imap, intl, mbstring
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v3
+
+      - name: Verify Docker is available
+        run: docker info
+
+      - name: Pre-pull Dovecot image
+        # Pulling outside the test timing avoids spurious wait-strategy timeouts
+        # if the registry is slow.
+        run: docker pull dovecot/dovecot:latest-root
+
+      - name: Run integration tests
+        run: composer test:integration
+
+  docs-freshness:
+    name: Documentation freshness checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Config keys are consistent across docs and dist file
+        run: |
+          DOCS=$(git grep --untracked -hoE '\bimapsync_[a-z_]+' -- README.md AGENTS.md | sort -u)
+          DIST=$(git grep --untracked -hoE '\bimapsync_[a-z_]+' -- config.inc.php.dist | sort -u)
+          if ! diff <(echo "$DOCS") <(echo "$DIST") > /tmp/keys.diff; then
+              echo "::error::Config-key mismatch between docs and config.inc.php.dist"
+              echo "Diff (< docs, > dist):"
+              cat /tmp/keys.diff
+              exit 1
+          fi
+
+      - name: Locale keys exist in both en_US and de_DE, and the two locales mirror each other
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          git grep --untracked -hoE 'gettext\([^,)]+' -- '*.php' '*.js' \
+            | sed -E "s/gettext\(['\"]([a-z0-9_]+)['\"].*/\1/" \
+            | grep -E '^[a-z0-9_]+$' | sort -u > "$tmp/used"
+          grep -hoE "labels\['[a-z0-9_]+'\]" localization/en_US.inc \
+            | sed -E "s/.*\['([^']+)'\]/\1/" | sort -u > "$tmp/en"
+          grep -hoE "labels\['[a-z0-9_]+'\]" localization/de_DE.inc \
+            | sed -E "s/.*\['([^']+)'\]/\1/" | sort -u > "$tmp/de"
+
+          failed=0
+          report() {
+              local label="$1"; shift
+              local file="$1"
+              if [ -s "$file" ]; then
+                  echo "::error::$label"
+                  sed 's/^/  /' "$file"
+                  failed=1
+              fi
+          }
+
+          comm -23 "$tmp/used" "$tmp/en" > "$tmp/used_not_en"
+          comm -23 "$tmp/used" "$tmp/de" > "$tmp/used_not_de"
+          comm -23 "$tmp/en"   "$tmp/de" > "$tmp/en_not_de"
+          comm -13 "$tmp/en"   "$tmp/de" > "$tmp/de_not_en"
+
+          report "Locale keys used in code but missing from en_US.inc" "$tmp/used_not_en"
+          report "Locale keys used in code but missing from de_DE.inc" "$tmp/used_not_de"
+          report "Locale keys defined in en_US.inc but missing from de_DE.inc" "$tmp/en_not_de"
+          report "Locale keys defined in de_DE.inc but missing from en_US.inc" "$tmp/de_not_en"
+
+          exit "$failed"

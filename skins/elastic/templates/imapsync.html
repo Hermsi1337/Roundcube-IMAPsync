@@ -1,0 +1,27 @@
+<roundcube:include file="includes/layout.html" />
+<roundcube:include file="includes/menu.html" />
+<roundcube:include file="includes/settings-menu.html" />
+
+<h1 class="voice"><roundcube:label name="settings" /> : <roundcube:label name="imapsync.pagetitle" /></h1>
+
+<div id="layout-content" role="main">
+	<div class="header">
+		<a class="button icon back-sidebar-button" href="#sidebar"><span class="inner"><roundcube:label name="settings" /></span></a>
+		<span class="header-title"><roundcube:label name="imapsync.pagetitle" /></span>
+	</div>
+	<div class="iframe-wrapper">
+		<div id="imapsync-content" class="imapsync-content">
+			<roundcube:object name="plugin.imapsyncform" />
+			<section id="imapsync-progress" class="box imapsync-panel" hidden>
+				<div class="boxtitle"><roundcube:label name="imapsync.progresstitle" /></div>
+				<div id="imapsync-progress-list" class="boxcontent imapsync-progress-list"></div>
+			</section>
+			<section id="imapsync-result" class="box imapsync-panel" hidden>
+				<div class="boxtitle"><roundcube:label name="imapsync.summarytitle" /></div>
+				<div id="imapsync-result-content" class="boxcontent"></div>
+			</section>
+		</div>
+	</div>
+</div>
+
+<roundcube:include file="includes/footer.html" />

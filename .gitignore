@@ -1,0 +1,6 @@
+dist/*
+!dist/.gitkeep
+/vendor/
+/composer.lock
+/.phpunit.cache/
+/.phpunit.result.cache

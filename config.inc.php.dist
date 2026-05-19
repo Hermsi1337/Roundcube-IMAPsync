@@ -1,0 +1,10 @@
+<?php
+
+// IMAPsync plugin configuration
+// Copy this file to config.inc.php and adjust the settings for your installation.
+
+$config['imapsync_allow_insecure'] = false;
+$config['imapsync_host_allowlist'] = [];
+$config['imapsync_host_denylist'] = [];
+$config['imapsync_skip_folders'] = [];
+$config['imapsync_folder_prefix'] = '';
