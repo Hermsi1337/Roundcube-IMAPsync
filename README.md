@@ -14,7 +14,7 @@ There is no Perl `imapsync` binary, no background daemon, no extra runtime depen
 
 ## Features
 
-- **Settings-section UI.** A new "IMAP sync" entry appears in Roundcube's Settings; no extra
+- **Settings-section UI.** A new "Email migration" entry appears in Roundcube's Settings; no extra
   menus or buttons clutter the rest of the interface.
 - **PHP-native sync.** Walks every folder on the source, recreates missing folders on the
   destination preserving hierarchy, and appends only the messages that are not already there.
@@ -97,17 +97,17 @@ Optionally copy and edit the plugin configuration:
 cp plugins/imapsync/config.inc.php.dist plugins/imapsync/config.inc.php
 ```
 
-Reload Roundcube. A new **IMAP sync** entry appears under Settings.
+Reload Roundcube. A new **Email migration** entry appears under Settings.
 
 ---
 
 ## Usage
 
 1. Open Roundcube, log in to the account that should **receive** the mail.
-2. Go to **Settings → IMAP sync**.
+2. Go to **Settings → Email migration**.
 3. Enter the **source** server's host, port, encryption, username and password.
-4. Click **Start sync**. The browser shows a "loading" indicator until the sync finishes.
-5. When the sync completes, the page shows a summary (folders synced, messages copied,
+4. Click **Start migration**. The browser shows a "loading" indicator until the run finishes.
+5. When the run completes, the page shows a summary (folders migrated, messages copied,
    messages skipped, errors).
 6. Open your inbox — the migrated folders and messages are there.
 

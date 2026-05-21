@@ -132,7 +132,8 @@ class imapsync extends rcube_plugin
         $notice = html::div(['class' => 'boxinformation imapsync-notice'],
             html::tag('strong', ['class' => 'imapsync-notice-title'], rcube::Q($this->gettext('noticetitle')))
             . html::tag('ul', ['class' => 'imapsync-notice-list'],
-                html::tag('li', [], rcube::Q($this->gettext('noticesynchronous')))
+                html::tag('li', [], rcube::Q($this->gettext('noticepreserves')))
+                . html::tag('li', [], rcube::Q($this->gettext('noticesynchronous')))
                 . html::tag('li', [], rcube::Q($this->gettext('noticeretry')))
                 . html::tag('li', [], rcube::Q($this->gettext('noticeduration')))
             )
