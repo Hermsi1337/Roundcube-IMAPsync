@@ -63,14 +63,24 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
+          tarball="dist-release/roundcube-imapsync-${VERSION}.tar.gz"
+          # Materialise the listing once so subsequent greps don't trigger
+          # SIGPIPE on `tar` under `set -o pipefail` (e.g. `grep -q` closing
+          # the pipe after the first match).
+          listing="$(mktemp)"
+          trap 'rm -f "$listing"' EXIT
+          tar -tzf "$tarball" | sort > "$listing"
+
           echo "=== tarball top-level layout ==="
-          tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | sort | head -40
+          head -40 "$listing"
           echo
           echo "=== archive sanity ==="
           # Must contain plugin entry; must NOT contain dev-only paths.
-          tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | grep -q '^imapsync/imapsync.php$'
-          ! tar -tzf "dist-release/roundcube-imapsync-${VERSION}.tar.gz" | grep -E '^imapsync/(tests|dist|\.github|\.gitignore|\.gitattributes|phpunit)' \
-            || { echo "Archive leaks dev-only paths"; exit 1; }
+          grep -q '^imapsync/imapsync\.php$' "$listing"
+          if grep -E '^imapsync/(tests|dist|\.github|\.gitignore|\.gitattributes|phpunit)' "$listing"; then
+            echo "Archive leaks dev-only paths"
+            exit 1
+          fi
           echo "OK"
 
       - name: Generate SHA-256 checksums
