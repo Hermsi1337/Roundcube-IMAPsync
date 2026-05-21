@@ -104,7 +104,7 @@ class imapsync extends rcube_plugin
             $encryption->add($this->gettext('encryptionnone'), 'none', ['disabled' => 'disabled']);
         }
 
-        $table = new html_table(['class' => 'propform imapsync-form-table']);
+        $table = new html_table(['class' => 'propform imapsync-form-table', 'cols' => 2]);
         $this->addFormRow($table, 'imapsync-host', 'sourcehost', $host->show());
         $this->addFormRow($table, 'imapsync-port', 'sourceport', $port->show('993'));
         $this->addFormRow($table, 'imapsync-encryption', 'encryption', $encryption->show('ssl'));
@@ -129,10 +129,21 @@ class imapsync extends rcube_plugin
             'action' => './?_task=settings&_action=plugin.imapsync.start',
         ], $table->show() . html::p(['class' => 'formbuttons footerleft'], $button . ' ' . $cancelButton));
 
+        $notice = html::div(['class' => 'boxinformation imapsync-notice'],
+            html::tag('strong', ['class' => 'imapsync-notice-title'], rcube::Q($this->gettext('noticetitle')))
+            . html::tag('ul', ['class' => 'imapsync-notice-list'],
+                html::tag('li', [], rcube::Q($this->gettext('noticesynchronous')))
+                . html::tag('li', [], rcube::Q($this->gettext('noticeretry')))
+                . html::tag('li', [], rcube::Q($this->gettext('noticeduration')))
+            )
+        );
+
         return html::div(['id' => 'prefs-title', 'class' => 'boxtitle'], rcube::Q($this->gettext('pagetitle')))
             . html::div(['class' => 'box formcontainer scroller'],
                 html::div(['class' => 'boxcontent formcontent'],
-                    html::p(['class' => 'imapsync-intro'], rcube::Q($this->gettext('intro'))) . $form
+                    html::p(['class' => 'imapsync-intro'], rcube::Q($this->gettext('intro')))
+                    . $notice
+                    . $form
                 )
             );
     }

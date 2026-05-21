@@ -119,7 +119,10 @@ copied.
 
 ### Cancelling
 
-Closing the browser tab does **not** stop the sync — it runs to completion server-side. A
+Closing the browser tab is **not** a reliable way to cancel. Depending on the PHP and
+webserver configuration, the run may keep going server-side until it finishes — or it may
+be killed by `max_execution_time` / a webserver read timeout partway through. Either way
+the user loses the result summary, and a partially-completed run cannot be observed. A
 "Cancel" button is on the roadmap but not in this MVP.
 
 ---

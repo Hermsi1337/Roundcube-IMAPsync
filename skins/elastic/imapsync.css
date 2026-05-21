@@ -6,6 +6,24 @@
     margin: 0 0 1rem;
 }
 
+.imapsync-notice {
+    margin: 0 0 1.25rem;
+}
+
+.imapsync-notice-title {
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+.imapsync-notice-list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.imapsync-notice-list li {
+    margin: 0.2rem 0;
+}
+
 .imapsync-form-table td.title {
     width: 14rem;
 }
